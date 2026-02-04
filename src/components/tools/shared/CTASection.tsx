@@ -29,6 +29,52 @@ export default function CTASection({
   toolResults = {}
 }: CTASectionProps) {
 
+  // Format results for the notes field (concise for Cal.com)
+  const formatResultsForNotes = useCallback(() => {
+    if (!toolName) return '';
+    
+    let notes = `Tool: ${toolName}\n`;
+    notes += `Date: ${new Date().toLocaleDateString()}\n\n`;
+
+    Object.entries(toolResults).forEach(([key, value]) => {
+      const formattedKey = key
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/_/g, ' ')
+        .replace(/^./, str => str.toUpperCase())
+        .trim();
+      
+      if (Array.isArray(value)) {
+        if (value.length <= 5) {
+          notes += `${formattedKey}: ${value.join(', ')}\n`;
+        } else {
+          notes += `${formattedKey}: ${value.slice(0, 5).join(', ')}... (+${value.length - 5} more)\n`;
+        }
+      } else if (typeof value === 'object' && value !== null) {
+        const entries = Object.entries(value);
+        entries.slice(0, 4).forEach(([subKey, subValue]) => {
+          notes += `${subKey}: ${subValue}\n`;
+        });
+      } else {
+        notes += `${formattedKey}: ${value}\n`;
+      }
+    });
+
+    // Cal.com notes limit - truncate if needed
+    return notes.substring(0, 1000);
+  }, [toolName, toolResults]);
+
+  // Store results in localStorage for backup
+  useEffect(() => {
+    if (toolName && Object.keys(toolResults).length > 0) {
+      const dataToStore = {
+        toolName,
+        toolResults,
+        generatedAt: new Date().toISOString()
+      };
+      localStorage.setItem('fahis_tool_results', JSON.stringify(dataToStore));
+    }
+  }, [toolName, toolResults]);
+
   useEffect(() => {
     // Load Cal.com embed script
     (function (C: any, A: string, L: string) {
@@ -69,60 +115,20 @@ export default function CTASection({
     }
   }, []);
 
-  // Format results for the notes field
-  const formatResultsForNotes = useCallback(() => {
-    if (!toolName) return '';
-    
-    let notes = `📊 Tool Used: ${toolName}\n\n`;
-    notes += `📅 Generated: ${new Date().toLocaleDateString()}\n\n`;
-    notes += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-    notes += `📋 RESULTS SUMMARY\n`;
-    notes += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-
-    Object.entries(toolResults).forEach(([key, value]) => {
-      const formattedKey = key
-        .replace(/([A-Z])/g, ' $1')
-        .replace(/_/g, ' ')
-        .replace(/^./, str => str.toUpperCase())
-        .trim();
-      
-      if (Array.isArray(value)) {
-        notes += `${formattedKey}:\n`;
-        value.slice(0, 10).forEach((item) => {
-          if (typeof item === 'object') {
-            const itemStr = Object.entries(item).map(([k, v]) => `${k}: ${v}`).join(', ');
-            notes += `  • ${itemStr}\n`;
-          } else {
-            notes += `  • ${item}\n`;
-          }
-        });
-        if (value.length > 10) notes += `  ... and ${value.length - 10} more\n`;
-        notes += '\n';
-      } else if (typeof value === 'object' && value !== null) {
-        notes += `${formattedKey}:\n`;
-        Object.entries(value).forEach(([subKey, subValue]) => {
-          const formattedSubKey = subKey.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim();
-          notes += `  • ${formattedSubKey}: ${subValue}\n`;
-        });
-        notes += '\n';
-      } else {
-        notes += `${formattedKey}: ${value}\n`;
-      }
-    });
-
-    return notes;
-  }, [toolName, toolResults]);
-
-  // Build Cal.com config with prefilled data
-  const getCalConfig = () => {
-    return JSON.stringify({
-      layout: "month_view",
-      useSlotsViewOnSmallScreen: "true",
-      notes: formatResultsForNotes()
-    });
-  };
-
   const hasToolData = toolName && Object.keys(toolResults).length > 0;
+
+  // Handle click to open Cal modal with prefilled notes
+  const handleCalClick = useCallback(() => {
+    if (window.Cal && hasToolData) {
+      window.Cal.ns["15min"]("modal", {
+        calLink: "itsfahis/15min",
+        config: {
+          layout: "month_view",
+          notes: formatResultsForNotes()
+        }
+      });
+    }
+  }, [formatResultsForNotes, hasToolData]);
 
   return (
     <div className={`bg-gradient-to-r ${gradient} rounded-2xl p-6 md:p-8 text-white text-center mt-8`}>
@@ -131,9 +137,8 @@ export default function CTASection({
       
       {hasToolData ? (
         <button
-          data-cal-link="itsfahis/15min"
+          onClick={handleCalClick}
           data-cal-namespace="15min"
-          data-cal-config={getCalConfig()}
           className="inline-flex items-center gap-2 bg-primary-400 text-secondary-900 px-6 py-3 rounded-xl font-semibold hover:bg-primary-300 transition-all shadow-lg hover:shadow-xl cursor-pointer"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
