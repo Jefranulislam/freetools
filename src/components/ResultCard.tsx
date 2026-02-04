@@ -1,16 +1,19 @@
 'use client';
 
-import React from 'react';
-import { EstimateResult } from '@/lib/types';
+import React, { useEffect, useCallback } from 'react';
+import { EstimateResult, FormData as EstimatorFormData } from '@/lib/types';
 import { formatCurrency } from '@/lib/calculator';
+
+// Cal.com types
+declare global {
+  interface Window {
+    Cal?: any;
+  }
+}
 
 interface ResultCardProps {
   result: EstimateResult;
-  formData: {
-    platform: string;
-    systemNeeded: string[];
-    businessType: string;
-  };
+  formData: EstimatorFormData;
   onGetProposal: () => void;
   onStartOver: () => void;
 }
@@ -32,6 +35,86 @@ export default function ResultCard({
     erp: 'ERP',
     hrm: 'HRM',
     accounting: 'Accounting',
+  };
+
+  useEffect(() => {
+    // Load Cal.com embed script
+    (function (C: any, A: string, L: string) {
+      const p = function (a: any, ar: any) { a.q.push(ar); };
+      const d = C.document;
+      C.Cal = C.Cal || function () {
+        const cal = C.Cal;
+        const ar = arguments;
+        if (!cal.loaded) {
+          cal.ns = {};
+          cal.q = cal.q || [];
+          const script = d.head.appendChild(d.createElement("script"));
+          script.src = A;
+          cal.loaded = true;
+        }
+        if (ar[0] === L) {
+          const api: any = function () { p(api, arguments); };
+          const namespace = ar[1];
+          api.q = api.q || [];
+          if (typeof namespace === "string") {
+            cal.ns[namespace] = cal.ns[namespace] || api;
+            p(cal.ns[namespace], ar);
+            p(cal, ["initNamespace", namespace]);
+          } else p(cal, ar);
+          return;
+        }
+        p(cal, ar);
+      };
+    })(window, "https://app.cal.com/embed/embed.js", "init");
+
+    // Initialize Cal
+    if (window.Cal) {
+      window.Cal("init", "15min", { origin: "https://app.cal.com" });
+      window.Cal.ns["15min"]("ui", { 
+        hideEventTypeDetails: false, 
+        layout: "month_view" 
+      });
+    }
+  }, []);
+
+  // Format results for the notes field
+  const formatResultsForNotes = useCallback(() => {
+    let notes = `📊 Tool Used: Business System Cost Estimator\n\n`;
+    notes += `📅 Generated: ${new Date().toLocaleDateString()}\n\n`;
+    notes += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    notes += `📋 ESTIMATE RESULTS\n`;
+    notes += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    
+    notes += `💰 Estimated Cost: ${formatCurrency(result.estimatedCostMin)} - ${formatCurrency(result.estimatedCostMax)}\n`;
+    notes += `⏱️ Timeline: ${result.timelineWeeks} weeks\n`;
+    notes += `👥 Team Size: ${result.teamSize}\n\n`;
+    
+    notes += `📦 REQUIREMENTS:\n`;
+    notes += `• Platform: ${platformLabels[formData.platform] || formData.platform}\n`;
+    notes += `• Systems: ${formData.systemNeeded.map(s => systemLabels[s] || s).join(', ')}\n`;
+    notes += `• Users: ${formData.userCount}\n`;
+    notes += `• Modules: ${formData.modules.join(', ')}\n`;
+    notes += `• Customization: ${formData.customizationLevel}\n`;
+    notes += `• Integration: ${formData.integrationNeeded ? 'Yes' : 'No'}\n`;
+    notes += `• Deployment: ${formData.deployment}\n\n`;
+    
+    notes += `💵 COST BREAKDOWN:\n`;
+    notes += `• Base Cost: ${formatCurrency(result.breakdown.baseCost)}\n`;
+    notes += `• User License: ${formatCurrency(result.breakdown.userCost)}\n`;
+    notes += `• Modules: ${formatCurrency(result.breakdown.moduleCost)}\n`;
+    notes += `• Customization: ${formatCurrency(result.breakdown.customizationCost)}\n`;
+    notes += `• Integration: ${formatCurrency(result.breakdown.integrationCost)}\n`;
+
+    return notes;
+  }, [result, formData, platformLabels, systemLabels]);
+
+  // Build Cal.com config with prefilled data
+  const getCalConfig = () => {
+    return JSON.stringify({
+      layout: "month_view",
+      useSlotsViewOnSmallScreen: "true",
+      notes: formatResultsForNotes()
+    });
   };
 
   return (
@@ -180,10 +263,16 @@ export default function ResultCard({
           Get an exact proposal tailored to your business needs from our ERP experts.
         </p>
         <button
-          onClick={onGetProposal}
-          className="w-full py-3 px-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 btn-glow flex items-center justify-center gap-2"
+          data-cal-link="itsfahis/15min"
+          data-cal-namespace="15min"
+          data-cal-config={getCalConfig()}
+          className="w-full py-3 px-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 btn-glow flex items-center justify-center gap-2 cursor-pointer"
         >
-          <span>Get an Exact Proposal from Our ERP Experts</span>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span>Book Free Consultation with ERP Expert</span>
           <svg
             className="w-5 h-5"
             fill="none"

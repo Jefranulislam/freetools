@@ -267,6 +267,19 @@ export default function AuditToolPage() {
               description="Our experts can implement Odoo or Zoho to address your system gaps and automate your processes."
               buttonText="Get Implementation Quote"
               gradient="from-purple-600 to-pink-600"
+              toolName="Business Process & System Audit"
+              toolResults={{
+                overallScore: `${overallPercentage}%`,
+                maturityLevel: maturity.level,
+                description: maturity.desc,
+                sectionScores: Object.entries(auditSections).map(([key, section]) => ({
+                  section: section.title,
+                  score: `${Math.round((calculateSectionScore(key) / (section.questions.length * 2)) * 100)}%`
+                })),
+                gapsIdentified: Object.entries(auditSections)
+                  .filter(([key]) => Math.round((calculateSectionScore(key) / (auditSections[key as keyof typeof auditSections].questions.length * 2)) * 100) < 70)
+                  .map(([, section]) => section.title)
+              }}
             />
           </>
         )}

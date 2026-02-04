@@ -112,9 +112,9 @@ export default function ReadinessPage() {
   const readiness = getReadinessLevel();
 
   const generateChecklist = () => {
-    const checklist = [];
+    const checklist: { priority: string; task: string; timeframe: string }[] = [];
     
-    Object.entries(assessmentSections).forEach(([key, section]) => {
+    Object.entries(assessmentSections).forEach(([key]) => {
       const { percentage } = calculateSectionScore(key);
       if (percentage < 60) {
         if (key === 'data') {
@@ -143,7 +143,7 @@ export default function ReadinessPage() {
   };
 
   const getRiskAreas = () => {
-    const risks = [];
+    const risks: { area: string; score: number; risk: string; impact: string }[] = [];
     Object.entries(assessmentSections).forEach(([key, section]) => {
       const { percentage } = calculateSectionScore(key);
       if (percentage < 50) {
@@ -337,6 +337,18 @@ export default function ReadinessPage() {
               description="We'll help you address gaps and ensure a smooth ERP implementation."
               buttonText="Get Pre-ERP Consultation"
               gradient="from-indigo-600 to-violet-600"
+              toolName="ERP Readiness Assessment"
+              toolResults={{
+                overallScore: `${overallScore}%`,
+                readinessLevel: readiness.level,
+                description: readiness.desc,
+                sectionScores: Object.entries(assessmentSections).map(([key, section]) => ({
+                  section: section.title,
+                  score: `${calculateSectionScore(key).percentage}%`
+                })),
+                riskAreas: getRiskAreas().map(r => r.area),
+                preImplementationChecklist: generateChecklist().map(c => c.task)
+              }}
             />
           </>
         )}

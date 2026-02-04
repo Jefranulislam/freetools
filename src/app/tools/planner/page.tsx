@@ -328,6 +328,20 @@ export default function PlannerPage() {
               description="Our experts can fast-track your Phase 1 implementation with guaranteed timelines."
               buttonText="Start Phase 1 Now"
               gradient="from-orange-500 to-amber-500"
+              toolName="ERP/CRM Module Planner"
+              toolResults={{
+                businessGoal: businessGoals.find(g => g.value === formData.businessGoal)?.label || formData.businessGoal,
+                budgetRange: budgetRanges.find(b => b.value === formData.budgetRange)?.label || formData.budgetRange,
+                teamReadiness: teamReadinessOptions.find(t => t.value === formData.teamReadiness)?.label || formData.teamReadiness,
+                implementationUrgency: urgencyOptions.find(u => u.value === formData.urgency)?.label || formData.urgency,
+                industry: formData.industry || 'Not specified',
+                phases: phases.map(p => ({
+                  phase: p.phase,
+                  title: p.title,
+                  modules: p.modules.join(', '),
+                  timeline: p.timeline
+                }))
+              }}
             />
           </div>
         )}

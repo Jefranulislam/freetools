@@ -463,6 +463,22 @@ export default function SelectorPage() {
               description={`Get ${platformData[bestPlatform].name} implemented by certified experts with guaranteed timelines.`}
               buttonText="Get Implementation Quote"
               gradient="from-red-500 to-rose-500"
+              toolName="ERP Platform Selector"
+              toolResults={{
+                recommendedPlatform: platformData[bestPlatform].name,
+                companySize: companySizes.find(s => s.value === formData.companySize)?.label || formData.companySize,
+                industry: formData.industry,
+                budget: budgetRanges.find(b => b.value === formData.budget)?.label || formData.budget,
+                requiredModules: formData.modules,
+                priorities: formData.priorities,
+                estimatedPricing: platformData[bestPlatform].pricing[formData.companySize as keyof typeof platformData[typeof bestPlatform]['pricing']],
+                estimatedTimeline: platformData[bestPlatform].implementation[formData.companySize as keyof typeof platformData[typeof bestPlatform]['implementation']],
+                platformScores: {
+                  [platformData.odoo.name]: scores.odoo,
+                  [platformData.zoho.name]: scores.zoho,
+                  [platformData.oracle.name]: scores.oracle
+                }
+              }}
             />
           </div>
         )}

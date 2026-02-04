@@ -302,6 +302,20 @@ export default function ROICalculatorPage() {
             description="Get a detailed implementation plan with guaranteed ROI timelines."
             buttonText="Get Your Custom Proposal"
             gradient="from-secondary-700 to-secondary-900"
+            toolName="ROI & Compliance Calculator"
+            toolResults={{
+              monthlySavings: formatCurrency(results.monthlySavings),
+              annualSavings: formatCurrency(results.annualSavings),
+              roiPercentage: `${results.roiPercentage.toFixed(0)}%`,
+              paybackPeriod: `${results.paybackMonths.toFixed(1)} months`,
+              threeYearBenefit: formatCurrency(results.threeYearROI),
+              inputs: {
+                manualHours: `${formData.manualHours} hours/month`,
+                hourlyRate: `$${formData.hourlyRate}/hour`,
+                employees: formData.employees,
+                systemCost: formatCurrency(formData.systemCost)
+              }
+            }}
           />
         </div>
       </div>

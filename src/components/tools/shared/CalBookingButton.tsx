@@ -9,26 +9,20 @@ declare global {
   }
 }
 
-interface CTASectionProps {
-  title: string;
-  description: string;
-  buttonText: string;
-  buttonLink?: string;
-  gradient?: string;
-  toolName?: string;
-  toolResults?: Record<string, any>;
+interface CalBookingButtonProps {
+  toolName: string;
+  toolResults: Record<string, any>;
+  className?: string;
+  children?: React.ReactNode;
 }
 
-export default function CTASection({
-  title,
-  description,
-  buttonText,
-  buttonLink = '#contact',
-  gradient = 'from-secondary-800 to-secondary-900',
-  toolName = '',
-  toolResults = {}
-}: CTASectionProps) {
-
+export default function CalBookingButton({ 
+  toolName, 
+  toolResults, 
+  className = '',
+  children 
+}: CalBookingButtonProps) {
+  
   useEffect(() => {
     // Load Cal.com embed script
     (function (C: any, A: string, L: string) {
@@ -71,38 +65,32 @@ export default function CTASection({
 
   // Format results for the notes field
   const formatResultsForNotes = useCallback(() => {
-    if (!toolName) return '';
-    
     let notes = `📊 Tool Used: ${toolName}\n\n`;
     notes += `📅 Generated: ${new Date().toLocaleDateString()}\n\n`;
     notes += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-    notes += `📋 RESULTS SUMMARY\n`;
+    notes += `📋 TOOL RESULTS SUMMARY\n`;
     notes += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
     Object.entries(toolResults).forEach(([key, value]) => {
       const formattedKey = key
         .replace(/([A-Z])/g, ' $1')
-        .replace(/_/g, ' ')
         .replace(/^./, str => str.toUpperCase())
         .trim();
       
       if (Array.isArray(value)) {
         notes += `${formattedKey}:\n`;
-        value.slice(0, 10).forEach((item) => {
+        value.forEach((item, index) => {
           if (typeof item === 'object') {
-            const itemStr = Object.entries(item).map(([k, v]) => `${k}: ${v}`).join(', ');
-            notes += `  • ${itemStr}\n`;
+            notes += `  ${index + 1}. ${JSON.stringify(item)}\n`;
           } else {
             notes += `  • ${item}\n`;
           }
         });
-        if (value.length > 10) notes += `  ... and ${value.length - 10} more\n`;
         notes += '\n';
       } else if (typeof value === 'object' && value !== null) {
         notes += `${formattedKey}:\n`;
         Object.entries(value).forEach(([subKey, subValue]) => {
-          const formattedSubKey = subKey.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim();
-          notes += `  • ${formattedSubKey}: ${subValue}\n`;
+          notes += `  • ${subKey}: ${subValue}\n`;
         });
         notes += '\n';
       } else {
@@ -114,49 +102,44 @@ export default function CTASection({
   }, [toolName, toolResults]);
 
   // Build Cal.com config with prefilled data
-  const getCalConfig = () => {
+  const getCalConfig = useCallback(() => {
     return JSON.stringify({
       layout: "month_view",
       useSlotsViewOnSmallScreen: "true",
-      notes: formatResultsForNotes()
+      notes: formatResultsForNotes(),
+      // These will prefill if you add custom fields on Cal.com:
+      // - toolName: Name of the tool used
+      // - toolResults: JSON string of results
+      metadata: {
+        toolName: toolName,
+        toolResults: JSON.stringify(toolResults),
+        generatedAt: new Date().toISOString()
+      }
     });
-  };
-
-  const hasToolData = toolName && Object.keys(toolResults).length > 0;
+  }, [toolName, toolResults, formatResultsForNotes]);
 
   return (
-    <div className={`bg-gradient-to-r ${gradient} rounded-2xl p-6 md:p-8 text-white text-center mt-8`}>
-      <h3 className="text-xl md:text-2xl font-bold mb-2">{title}</h3>
-      <p className="text-primary-300 mb-6 text-sm md:text-base">{description}</p>
-      
-      {hasToolData ? (
-        <button
-          data-cal-link="itsfahis/15min"
-          data-cal-namespace="15min"
-          data-cal-config={getCalConfig()}
-          className="inline-flex items-center gap-2 bg-primary-400 text-secondary-900 px-6 py-3 rounded-xl font-semibold hover:bg-primary-300 transition-all shadow-lg hover:shadow-xl cursor-pointer"
-        >
+    <button
+      data-cal-link="itsfahis/15min"
+      data-cal-namespace="15min"
+      data-cal-config={getCalConfig()}
+      className={className || `
+        inline-flex items-center gap-2 px-8 py-4 
+        bg-gradient-to-r from-secondary-700 to-secondary-900 
+        text-white font-semibold rounded-xl 
+        hover:from-secondary-800 hover:to-secondary-950 
+        transition-all shadow-lg hover:shadow-xl
+      `}
+    >
+      {children || (
+        <>
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
               d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          {buttonText}
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-          </svg>
-        </button>
-      ) : (
-        <a
-          href={buttonLink}
-          target="_parent"
-          className="inline-flex items-center gap-2 bg-primary-400 text-secondary-900 px-6 py-3 rounded-xl font-semibold hover:bg-primary-300 transition-all shadow-lg hover:shadow-xl"
-        >
-          {buttonText}
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-          </svg>
-        </a>
+          Book Free Consultation
+        </>
       )}
-    </div>
+    </button>
   );
 }

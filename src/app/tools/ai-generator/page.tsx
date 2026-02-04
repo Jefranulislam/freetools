@@ -124,7 +124,7 @@ export default function AIGeneratorPage() {
         modules.push(...moduleMap[dept]);
       }
     });
-    return [...new Set(modules)];
+    return Array.from(new Set(modules));
   };
 
   const generateUserRoles = () => {
@@ -419,6 +419,19 @@ export default function AIGeneratorPage() {
               description="Our team can implement these requirements in Odoo or Zoho within weeks."
               buttonText="Get Implementation Quote"
               gradient="from-emerald-600 to-teal-600"
+              toolName="AI Business Requirement Generator"
+              toolResults={{
+                industry: formData.industry,
+                businessSize: businessSizes.find(s => s.value === formData.businessSize)?.label || formData.businessSize,
+                departments: formData.departments,
+                complianceRequirements: formData.complianceNeeds,
+                painPoints: formData.painPoints,
+                recommendedPlatform: result.platformRec.platform,
+                recommendedModules: result.modules,
+                estimatedUsers: result.userRoles.length,
+                dataMigrationNeeded: result.dataMigration,
+                integrationsRequired: result.integrations
+              }}
             />
           </div>
         )}

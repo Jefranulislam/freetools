@@ -1,10 +1,58 @@
 'use client';
 
+import { useEffect } from 'react';
 import Estimator from '@/components/Estimator';
 import Image from 'next/image';
 import Link from 'next/link';
 
+// Cal.com types
+declare global {
+  interface Window {
+    Cal?: any;
+  }
+}
+
 export default function EstimatorToolPage() {
+  useEffect(() => {
+    // Load Cal.com embed script
+    (function (C: any, A: string, L: string) {
+      const p = function (a: any, ar: any) { a.q.push(ar); };
+      const d = C.document;
+      C.Cal = C.Cal || function () {
+        const cal = C.Cal;
+        const ar = arguments;
+        if (!cal.loaded) {
+          cal.ns = {};
+          cal.q = cal.q || [];
+          const script = d.head.appendChild(d.createElement("script"));
+          script.src = A;
+          cal.loaded = true;
+        }
+        if (ar[0] === L) {
+          const api: any = function () { p(api, arguments); };
+          const namespace = ar[1];
+          api.q = api.q || [];
+          if (typeof namespace === "string") {
+            cal.ns[namespace] = cal.ns[namespace] || api;
+            p(cal.ns[namespace], ar);
+            p(cal, ["initNamespace", namespace]);
+          } else p(cal, ar);
+          return;
+        }
+        p(cal, ar);
+      };
+    })(window, "https://app.cal.com/embed/embed.js", "init");
+
+    // Initialize Cal
+    if (window.Cal) {
+      window.Cal("init", "15min", { origin: "https://app.cal.com" });
+      window.Cal.ns["15min"]("ui", { 
+        hideEventTypeDetails: false, 
+        layout: "month_view" 
+      });
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-primary-50">
       {/* Header */}
@@ -80,16 +128,21 @@ export default function EstimatorToolPage() {
             <p className="text-primary-300 mb-6">
               Get a detailed proposal and implementation timeline from our experts.
             </p>
-            <a
-              href="#contact"
-              target="_parent"
-              className="inline-flex items-center gap-2 bg-primary-400 text-secondary-900 px-8 py-3 rounded-xl font-semibold hover:bg-primary-300 transition-all shadow-lg"
+            <button
+              data-cal-link="itsfahis/15min"
+              data-cal-namespace="15min"
+              data-cal-config='{"layout":"month_view","useSlotsViewOnSmallScreen":"true"}'
+              className="inline-flex items-center gap-2 bg-primary-400 text-secondary-900 px-8 py-3 rounded-xl font-semibold hover:bg-primary-300 transition-all shadow-lg cursor-pointer"
             >
-              Get Free Consultation
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Book Free Consultation
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
-            </a>
+            </button>
           </div>
         </div>
       </div>
