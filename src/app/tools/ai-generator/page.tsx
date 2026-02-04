@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ToolHeader, CTASection } from '@/components/tools/shared';
+import { useTrackToolVisit } from '@/hooks/useTrackToolVisit';
 
 interface FormData {
   industry: string;
@@ -37,6 +38,9 @@ const complianceOptions = [
 ];
 
 export default function AIGeneratorPage() {
+  // Track tool visit
+  useTrackToolVisit('AI Business Requirement Generator', '/tools/ai-generator');
+  
   const [formData, setFormData] = useState<FormData>({
     industry: '',
     businessSize: '',

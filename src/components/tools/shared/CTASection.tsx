@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useCallback } from 'react';
+import { trackToolComplete, getActivitySummary, getActivityData } from '@/lib/activityTracker';
 
 // Cal.com types
 declare global {
@@ -16,6 +17,7 @@ interface CTASectionProps {
   buttonLink?: string;
   gradient?: string;
   toolName?: string;
+  toolPath?: string;
   toolResults?: Record<string, any>;
 }
 
@@ -26,54 +28,17 @@ export default function CTASection({
   buttonLink = '#contact',
   gradient = 'from-secondary-800 to-secondary-900',
   toolName = '',
+  toolPath = '',
   toolResults = {}
 }: CTASectionProps) {
 
-  // Format results for the notes field (concise for Cal.com)
-  const formatResultsForNotes = useCallback(() => {
-    if (!toolName) return '';
-    
-    let notes = `Tool: ${toolName}\n`;
-    notes += `Date: ${new Date().toLocaleDateString()}\n\n`;
-
-    Object.entries(toolResults).forEach(([key, value]) => {
-      const formattedKey = key
-        .replace(/([A-Z])/g, ' $1')
-        .replace(/_/g, ' ')
-        .replace(/^./, str => str.toUpperCase())
-        .trim();
-      
-      if (Array.isArray(value)) {
-        if (value.length <= 5) {
-          notes += `${formattedKey}: ${value.join(', ')}\n`;
-        } else {
-          notes += `${formattedKey}: ${value.slice(0, 5).join(', ')}... (+${value.length - 5} more)\n`;
-        }
-      } else if (typeof value === 'object' && value !== null) {
-        const entries = Object.entries(value);
-        entries.slice(0, 4).forEach(([subKey, subValue]) => {
-          notes += `${subKey}: ${subValue}\n`;
-        });
-      } else {
-        notes += `${formattedKey}: ${value}\n`;
-      }
-    });
-
-    // Cal.com notes limit - truncate if needed
-    return notes.substring(0, 1000);
-  }, [toolName, toolResults]);
-
-  // Store results in localStorage for backup
+  // Track tool completion when results are available
   useEffect(() => {
     if (toolName && Object.keys(toolResults).length > 0) {
-      const dataToStore = {
-        toolName,
-        toolResults,
-        generatedAt: new Date().toISOString()
-      };
-      localStorage.setItem('fahis_tool_results', JSON.stringify(dataToStore));
+      const path = toolPath || window.location.pathname;
+      trackToolComplete(toolName, path, toolResults);
     }
-  }, [toolName, toolResults]);
+  }, [toolName, toolPath, toolResults]);
 
   useEffect(() => {
     // Load Cal.com embed script
@@ -117,18 +82,24 @@ export default function CTASection({
 
   const hasToolData = toolName && Object.keys(toolResults).length > 0;
 
-  // Handle click to open Cal modal with prefilled notes
+  // Handle click to open Cal modal with ALL activity data
   const handleCalClick = useCallback(() => {
-    if (window.Cal && hasToolData) {
+    if (window.Cal) {
+      // Get full activity summary including all tools used
+      const activitySummary = getActivitySummary();
+      const activityData = getActivityData();
+      
+      console.log('📊 Sending to Cal.com:', { activitySummary, activityData });
+      
       window.Cal.ns["15min"]("modal", {
         calLink: "itsfahis/15min",
         config: {
           layout: "month_view",
-          notes: formatResultsForNotes()
+          notes: activitySummary
         }
       });
     }
-  }, [formatResultsForNotes, hasToolData]);
+  }, []);
 
   return (
     <div className={`bg-gradient-to-r ${gradient} rounded-2xl p-6 md:p-8 text-white text-center mt-8`}>

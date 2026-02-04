@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ToolHeader, CTASection } from '@/components/tools/shared';
+import { useTrackToolVisit } from '@/hooks/useTrackToolVisit';
 
 interface FormData {
   manualHours: number;
@@ -13,6 +14,9 @@ interface FormData {
 }
 
 export default function ROICalculatorPage() {
+  // Track tool visit
+  useTrackToolVisit('ROI & Compliance Calculator', '/tools/roi');
+  
   const [formData, setFormData] = useState<FormData>({
     manualHours: 100,
     hourlyRate: 25,

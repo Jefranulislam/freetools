@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ToolHeader, CTASection, PhaseCard } from '@/components/tools/shared';
+import { useTrackToolVisit } from '@/hooks/useTrackToolVisit';
 
 interface FormData {
   businessGoal: string;
@@ -54,6 +55,9 @@ const moduleLibrary = {
 };
 
 export default function PlannerPage() {
+  // Track tool visit
+  useTrackToolVisit('ERP/CRM Module Planner', '/tools/planner');
+  
   const [formData, setFormData] = useState<FormData>({
     businessGoal: '',
     budgetRange: '',

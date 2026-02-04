@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ToolHeader, CTASection } from '@/components/tools/shared';
+import { useTrackToolVisit } from '@/hooks/useTrackToolVisit';
 
 interface FormData {
   companySize: string;
@@ -135,6 +136,9 @@ const platformData = {
 };
 
 export default function SelectorPage() {
+  // Track tool visit
+  useTrackToolVisit('ERP Platform Selector', '/tools/selector');
+  
   const [formData, setFormData] = useState<FormData>({
     companySize: '',
     industry: '',

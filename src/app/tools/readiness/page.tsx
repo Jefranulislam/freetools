@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ToolHeader, CTASection, ScoreDisplay } from '@/components/tools/shared';
+import { useTrackToolVisit } from '@/hooks/useTrackToolVisit';
 
 interface Answer {
   [key: string]: number;
@@ -61,6 +62,9 @@ const assessmentSections = {
 };
 
 export default function ReadinessPage() {
+  // Track tool visit
+  useTrackToolVisit('ERP Readiness Assessment', '/tools/readiness');
+  
   const [answers, setAnswers] = useState<Answer>({});
   const [showResults, setShowResults] = useState(false);
 

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ToolHeader, CTASection, ScoreDisplay, GapItem } from '@/components/tools/shared';
+import { useTrackToolVisit } from '@/hooks/useTrackToolVisit';
 
 interface Answer {
   [key: string]: number;
@@ -81,6 +82,9 @@ const answerOptions = [
 ];
 
 export default function AuditToolPage() {
+  // Track tool visit
+  useTrackToolVisit('Business Process & System Audit', '/tools/audit');
+  
   const [answers, setAnswers] = useState<Answer>({});
   const [showResults, setShowResults] = useState(false);
 
